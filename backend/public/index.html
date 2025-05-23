@@ -1,5 +1,980 @@
 <!DOCTYPE html>
-<html>
-<head><title>Interface Principal</title></head>
-<body><h1>Bem-vindo ao Sistema Monitor</h1></body>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Monitor profissional de atividades e processos do sistema em tempo real">
+    <meta name="author" content="Sistema Monitor Team">
+    <title>Sistema Monitor - Dashboard Profissional</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2'%3E%3Cpath d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/%3E%3Cpath d='m22 6-10 7L2 6'/%3E%3C/svg%3E">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-900 min-h-screen transition-all duration-300">
+    
+    <!-- Header -->
+    <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo e Título -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Sistema Monitor</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Dashboard Profissional</p>
+                    </div>
+                </div>
+                
+                <!-- Status e Controles -->
+                <div class="flex items-center space-x-4">
+                    <!-- Status de Conexão -->
+                    <div class="flex items-center space-x-2">
+                        <div id="connection-status" class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300" id="status-text">Conectado</span>
+                    </div>
+                    
+                    <!-- Última Atualização -->
+                    <div class="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
+                        <span id="last-update">Carregando...</span>
+                    </div>
+                    
+                    <!-- Toggle Dark Mode -->
+                    <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <i data-lucide="sun" class="w-5 h-5 text-gray-600 dark:text-gray-300"></i>
+                    </button>
+                    
+                    <!-- Botão Refresh -->
+                    <button id="refresh-btn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>Atualizar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Cards de Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- CPU Usage -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Uso da CPU</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" id="cpu-usage">0%</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl">
+                        <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="cpu-progress" class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAM Usage -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Uso da RAM</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" id="ram-usage">0 GB</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl">
+                        <i data-lucide="memory-stick" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="ram-progress" class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processos Ativos -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Processos</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" id="process-count">0</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-xl">
+                        <i data-lucide="layers" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Processos monitorados</p>
+                </div>
+            </div>
+
+            <!-- Uptime -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Uptime</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white" id="system-uptime">0h 0m</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-xl">
+                        <i data-lucide="clock" class="w-6 h-6 text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Tempo ativo do sistema</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- CPU Chart -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Uso da CPU em Tempo Real</h3>
+                    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span>CPU %</span>
+                    </div>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="cpu-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Memory Chart -->
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Uso de Memória</h3>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span>Usada</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                            <span>Livre</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="memory-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processes Table -->
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 animate-slide-up">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Processos do Sistema</h3>
+                    <div class="flex items-center space-x-3">
+                        <!-- Filtros -->
+                        <select id="sort-filter" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                            <option value="cpu">Ordenar por CPU</option>
+                            <option value="memory">Ordenar por Memória</option>
+                            <option value="name">Ordenar por Nome</option>
+                        </select>
+                        
+                        <!-- Export Button -->
+                        <button id="export-csv" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm transition-colors duration-200 flex items-center space-x-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Exportar CSV</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Processo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">PID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CPU %</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Memória (MB)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="processes-table" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Dados serão inseridos via JavaScript -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <div class="flex flex-col items-center space-y-3">
+                                    <i data-lucide="loader" class="w-8 h-8 animate-spin"></i>
+                                    <p>Carregando processos...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-8 flex flex-col items-center space-y-4">
+            <i data-lucide="loader" class="w-12 h-12 animate-spin text-blue-500"></i>
+            <p class="text-lg font-medium text-gray-900 dark:text-white">Carregando dados do sistema...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-red-100 dark:bg-red-900/20 p-2 rounded-full">
+                    <i data-lucide="alert-circle" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Erro de Conexão</h3>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-6" id="error-message">
+                Não foi possível conectar com o servidor. Verifique se o backend está rodando.
+            </p>
+            <div class="flex space-x-3">
+                <button id="retry-btn" class="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200">
+                    Tentar Novamente
+                </button>
+                <button id="close-error-btn" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        /**
+         * Sistema Monitor - Frontend JavaScript
+         * Gerenciamento completo da interface e comunicação com API
+         */
+
+        class SystemMonitor {
+            constructor() {
+                this.apiUrl = 'http://localhost:3000/api';
+                this.updateInterval = 5000; // 5 segundos
+                this.maxDataPoints = 20;
+                this.cpuChart = null;
+                this.memoryChart = null;
+                this.currentTheme = 'light';
+                this.isConnected = true;
+                this.updateTimer = null;
+                
+                // Data storage
+                this.cpuData = [];
+                this.memoryData = [];
+                this.processesData = [];
+                
+                this.init();
+            }
+
+            /**
+             * Inicializa o sistema
+             */
+            async init() {
+                this.showLoading();
+                this.setupEventListeners();
+                this.initializeTheme();
+                await this.initializeCharts();
+                await this.loadInitialData();
+                this.startAutoUpdate();
+                this.hideLoading();
+                lucide.createIcons();
+            }
+
+            /**
+             * Configura event listeners
+             */
+            setupEventListeners() {
+                // Theme toggle
+                document.getElementById('theme-toggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+
+                // Refresh button
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.refreshData();
+                });
+
+                // Export CSV
+                document.getElementById('export-csv').addEventListener('click', () => {
+                    this.exportToCSV();
+                });
+
+                // Sort filter
+                document.getElementById('sort-filter').addEventListener('change', (e) => {
+                    this.sortProcesses(e.target.value);
+                });
+
+                // Error modal buttons
+                document.getElementById('retry-btn').addEventListener('click', () => {
+                    this.hideError();
+                    this.refreshData();
+                });
+
+                document.getElementById('close-error-btn').addEventListener('click', () => {
+                    this.hideError();
+                });
+            }
+
+            /**
+             * Inicializa o tema
+             */
+            initializeTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                this.currentTheme = savedTheme;
+                this.applyTheme();
+            }
+
+            /**
+             * Aplica o tema atual
+             */
+            applyTheme() {
+                const html = document.documentElement;
+                const themeIcon = document.querySelector('#theme-toggle i');
+                
+                if (this.currentTheme === 'dark') {
+                    html.classList.add('dark');
+                    themeIcon.setAttribute('data-lucide', 'moon');
+                } else {
+                    html.classList.remove('dark');
+                    themeIcon.setAttribute('data-lucide', 'sun');
+                }
+                
+                localStorage.setItem('theme', this.currentTheme);
+                lucide.createIcons();
+                
+                // Atualiza charts se existirem
+                if (this.cpuChart && this.memoryChart) {
+                    this.updateChartThemes();
+                }
+            }
+
+            /**
+             * Alterna tema
+             */
+            toggleTheme() {
+                this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+                this.applyTheme();
+                this.showToast('Tema alterado com sucesso!', 'success');
+            }
+
+            /**
+             * Inicializa os gráficos
+             */
+            async initializeCharts() {
+                const isDark = this.currentTheme === 'dark';
+                const textColor = isDark ? '#f3f4f6' : '#374151';
+                const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+                // CPU Chart
+                const cpuCtx = document.getElementById('cpu-chart').getContext('2d');
+                this.cpuChart = new Chart(cpuCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'CPU %',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    color: textColor,
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Memory Chart (Doughnut)
+                const memCtx = document.getElementById('memory-chart').getContext('2d');
+                this.memoryChart = new Chart(memCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Memória Usada', 'Memória Livre'],
+                        datasets: [{
+                            data: [0, 100],
+                            backgroundColor: [
+                                '#10b981',
+                                '#e5e7eb'
+                            ],
+                            borderWidth: 0,
+                            cutout: '70%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            /**
+             * Atualiza temas dos gráficos
+             */
+            updateChartThemes() {
+                const isDark = this.currentTheme === 'dark';
+                const textColor = isDark ? '#f3f4f6' : '#374151';
+                const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+                // Atualiza CPU chart
+                this.cpuChart.options.scales.y.ticks.color = textColor;
+                this.cpuChart.options.scales.y.grid.color = gridColor;
+                this.cpuChart.options.scales.x.ticks.color = textColor;
+                this.cpuChart.options.scales.x.grid.color = gridColor;
+                this.cpuChart.update();
+
+                // Atualiza Memory chart
+                this.memoryChart.data.datasets[0].backgroundColor[1] = isDark ? '#374151' : '#e5e7eb';
+                this.memoryChart.update();
+            }
+
+            /**
+             * Carrega dados iniciais
+             */
+            async loadInitialData() {
+                try {
+                    await Promise.all([
+                        this.fetchSystemUsage(),
+                        this.fetchProcesses(),
+                        this.fetchSystemInfo()
+                    ]);
+                    this.updateConnectionStatus(true);
+                } catch (error) {
+                    console.error('Erro ao carregar dados iniciais:', error);
+                    this.updateConnectionStatus(false);
+                    this.showError('Erro ao conectar com o servidor. Verifique se o backend está rodando na porta 3000.');
+                }
+            }
+
+            /**
+             * Busca dados de uso do sistema
+             */
+            async fetchSystemUsage() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/usage`);
+                    if (!response.ok) throw new Error('Erro na resposta da API');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateSystemUsageUI(data.data);
+                        this.updateCharts(data.data);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar uso do sistema:', error);
+                    throw error;
+                }
+            }
+
+            /**
+             * Busca lista de processos
+             */
+            async fetchProcesses() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/processes`);
+                    if (!response.ok) throw new Error('Erro na resposta da API');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.processesData = data.data;
+                        this.updateProcessesTable(data.data);
+                        this.updateProcessCount(data.count);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar processos:', error);
+                    throw error;
+                }
+            }
+
+            /**
+             * Busca informações do sistema
+             */
+            async fetchSystemInfo() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/system-info`);
+                    if (!response.ok) throw new Error('Erro na resposta da API');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateSystemUptime(data.data.uptime);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar informações do sistema:', error);
+                    // Não lança erro pois não é crítico
+                }
+            }
+
+            /**
+             * Atualiza UI com dados de uso do sistema
+             */
+            updateSystemUsageUI(data) {
+                // CPU
+                document.getElementById('cpu-usage').textContent = `${data.cpu.toFixed(1)}%`;
+                document.getElementById('cpu-progress').style.width = `${data.cpu}%`;
+                
+                // RAM
+                document.getElementById('ram-usage').textContent = `${data.ramUsed.toFixed(1)} GB`;
+                const ramPercent = (data.ramUsed / data.ramTotal) * 100;
+                document.getElementById('ram-progress').style.width = `${ramPercent}%`;
+                
+                // Atualiza timestamp
+                document.getElementById('last-update').textContent = 
+                    `Atualizado: ${new Date().toLocaleTimeString()}`;
+            }
+
+            /**
+             * Atualiza gráficos com novos dados
+             */
+            updateCharts(data) {
+                const now = new Date().toLocaleTimeString();
+                
+                // CPU Chart
+                this.cpuData.push({ time: now, value: data.cpu });
+                if (this.cpuData.length > this.maxDataPoints) {
+                    this.cpuData.shift();
+                }
+                
+                this.cpuChart.data.labels = this.cpuData.map(d => d.time);
+                this.cpuChart.data.datasets[0].data = this.cpuData.map(d => d.value);
+                this.cpuChart.update('none');
+                
+                // Memory Chart
+                const usedPercent = (data.ramUsed / data.ramTotal) * 100;
+                const freePercent = 100 - usedPercent;
+                
+                this.memoryChart.data.datasets[0].data = [usedPercent, freePercent];
+                this.memoryChart.update('none');
+            }
+
+            /**
+             * Atualiza tabela de processos
+             */
+            updateProcessesTable(processes) {
+                const tbody = document.getElementById('processes-table');
+                
+                if (processes.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <div class="flex flex-col items-center space-y-3">
+                                    <i data-lucide="inbox" class="w-8 h-8"></i>
+                                    <p>Nenhum processo encontrado</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = processes.map(process => {
+                    const isHighCpu = process.cpu > 20;
+                    const isHighMemory = process.memory > 500;
+                    const isAlert = isHighCpu || isHighMemory;
+                    
+                    return `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 ${isAlert ? 'bg-red-50 dark:bg-red-900/10' : ''}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                            <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">${process.name}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                ${process.pid}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-medium ${isHighCpu ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}">
+                                        ${process.cpu.toFixed(1)}%
+                                    </span>
+                                    ${isHighCpu ? '<i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>' : ''}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-medium ${isHighMemory ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}">
+                                        ${process.memory.toFixed(1)} MB
+                                    </span>
+                                    ${isHighMemory ? '<i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>' : ''}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                    ${process.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <button onclick="systemMonitor.killProcess('${process.pid}', '${process.name}')" 
+                                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-150">
+                                    <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                lucide.createIcons();
+            }
+
+            /**
+             * Atualiza contador de processos
+             */
+            updateProcessCount(count) {
+                document.getElementById('process-count').textContent = count;
+            }
+
+            /**
+             * Atualiza uptime do sistema
+             */
+            updateSystemUptime(uptime) {
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                document.getElementById('system-uptime').textContent = `${hours}h ${minutes}m`;
+            }
+
+            /**
+             * Ordena processos
+             */
+            sortProcesses(criteria) {
+                let sorted = [...this.processesData];
+                
+                switch (criteria) {
+                    case 'cpu':
+                        sorted.sort((a, b) => b.cpu - a.cpu);
+                        break;
+                    case 'memory':
+                        sorted.sort((a, b) => b.memory - a.memory);
+                        break;
+                    case 'name':
+                        sorted.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                }
+                
+                this.updateProcessesTable(sorted);
+                this.showToast(`Processos ordenados por ${criteria}`, 'success');
+            }
+
+            /**
+             * Encerra processo (simulação)
+             */
+            async killProcess(pid, name) {
+                if (!confirm(`Tem certeza que deseja encerrar o processo "${name}" (PID: ${pid})?`)) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`${this.apiUrl}/kill-process/${pid}`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        this.showToast(`Processo ${name} encerrado com sucesso`, 'success');
+                        await this.fetchProcesses(); // Recarrega lista
+                    } else {
+                        throw new Error('Erro ao encerrar processo');
+                    }
+                } catch (error) {
+                    console.error('Erro ao encerrar processo:', error);
+                    this.showToast('Erro ao encerrar processo', 'error');
+                }
+            }
+
+            /**
+             * Exporta dados para CSV
+             */
+            exportToCSV() {
+                if (this.processesData.length === 0) {
+                    this.showToast('Nenhum dado para exportar', 'warning');
+                    return;
+                }
+                
+                const headers = ['Nome', 'PID', 'CPU %', 'Memória (MB)', 'Status'];
+                const csvContent = [
+                    headers.join(','),
+                    ...this.processesData.map(process => [
+                        `"${process.name}"`,
+                        process.pid,
+                        process.cpu.toFixed(1),
+                        process.memory.toFixed(1),
+                        process.status
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `processos_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                this.showToast('Relatório exportado com sucesso!', 'success');
+            }
+
+            /**
+             * Atualiza status de conexão
+             */
+            updateConnectionStatus(connected) {
+                this.isConnected = connected;
+                const statusDot = document.getElementById('connection-status');
+                const statusText = document.getElementById('status-text');
+                
+                if (connected) {
+                    statusDot.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse';
+                    statusText.textContent = 'Conectado';
+                } else {
+                    statusDot.className = 'w-3 h-3 rounded-full bg-red-500';
+                    statusText.textContent = 'Desconectado';
+                }
+            }
+
+            /**
+             * Inicia atualização automática
+             */
+            startAutoUpdate() {
+                this.updateTimer = setInterval(async () => {
+                    try {
+                        await this.loadInitialData();
+                    } catch (error) {
+                        console.error('Erro na atualização automática:', error);
+                        this.updateConnectionStatus(false);
+                    }
+                }, this.updateInterval);
+            }
+
+            /**
+             * Para atualização automática
+             */
+            stopAutoUpdate() {
+                if (this.updateTimer) {
+                    clearInterval(this.updateTimer);
+                    this.updateTimer = null;
+                }
+            }
+
+            /**
+             * Refresh manual dos dados
+             */
+            async refreshData() {
+                const refreshBtn = document.getElementById('refresh-btn');
+                const icon = refreshBtn.querySelector('i');
+                
+                // Visual feedback
+                icon.classList.add('animate-spin');
+                refreshBtn.disabled = true;
+                
+                try {
+                    await this.loadInitialData();
+                    this.showToast('Dados atualizados com sucesso!', 'success');
+                } catch (error) {
+                    this.showToast('Erro ao atualizar dados', 'error');
+                } finally {
+                    setTimeout(() => {
+                        icon.classList.remove('animate-spin');
+                        refreshBtn.disabled = false;
+                    }, 1000);
+                }
+            }
+
+            /**
+             * Mostra toast notification
+             */
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                const icons = {
+                    success: 'check',
+                    error: 'x',
+                    warning: 'alert-triangle',
+                    info: 'info'
+                };
+                
+                toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-up`;
+                toast.innerHTML = `
+                    <i data-lucide="${icons[type]}" class="w-5 h-5"></i>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 4000);
+            }
+
+            /**
+             * Mostra overlay de loading
+             */
+            showLoading() {
+                document.getElementById('loading-overlay').classList.remove('hidden');
+            }
+
+            /**
+             * Esconde overlay de loading
+             */
+            hideLoading() {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+
+            /**
+             * Mostra modal de erro
+             */
+            showError(message) {
+                document.getElementById('error-message').textContent = message;
+                document.getElementById('error-modal').classList.remove('hidden');
+            }
+
+            /**
+             * Esconde modal de erro
+             */
+            hideError() {
+                document.getElementById('error-modal').classList.add('hidden');
+            }
+        }
+
+        // Inicializa o sistema quando DOM estiver pronto
+        let systemMonitor;
+        document.addEventListener('DOMContentLoaded', () => {
+            systemMonitor = new SystemMonitor();
+        });
+
+        // Cleanup ao sair da página
+        window.addEventListener('beforeunload', () => {
+            if (systemMonitor) {
+                systemMonitor.stopAutoUpdate();
+            }
+        });
+    </script>
+</body>
 </html>
