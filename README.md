@@ -52,7 +52,7 @@ sistema-monitor/
 ### 1. Clone ou baixe o projeto
 ```bash
 git clone https://github.com/juanmmendes/monitor-sistema.git
-cd sistema-monitor
+cd monitor-sistema
 ```
 
 ### 2. Instale as dependências do backend
