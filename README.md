@@ -51,7 +51,7 @@ sistema-monitor/
 
 ### 1. Clone ou baixe o projeto
 ```bash
-git clone https://github.com/seu-usuario/sistema-monitor.git
+git clone https://github.com/juanmmendes/monitor-sistema.git
 cd sistema-monitor
 ```
 
